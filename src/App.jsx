@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import jsPDF from 'jspdf';
 
 const servicesList = [
   { name: "Sodyba šventei – Mini", price: 350 },
@@ -50,11 +51,32 @@ export default function App() {
     return sum;
   }, 0);
 
+  const downloadPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(12);
+    doc.text("Sodybos užsakymo skaičiuoklės ataskaita", 10, 10);
+
+    let y = 20;
+    services.forEach(service => {
+      if (service.selected) {
+        doc.text(
+          `${service.name} – Kiekis: ${service.quantity}, Suma: €${(service.price * service.quantity).toFixed(2)}`,
+          10,
+          y
+        );
+        y += 7;
+      }
+    });
+
+    doc.text(`\nIš viso: €${total.toFixed(2)}`, 10, y + 5);
+    doc.save("sodybos-skaiciuokle.pdf");
+  };
+
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial", maxWidth: "700px", margin: "0 auto" }}>
-      <h1>Sodybos skaičiuoklė</h1>
+    <div style={{ padding: "20px", fontFamily: "Arial", fontSize: "14px", maxWidth: "700px", margin: "0 auto" }}>
+      <h1 style={{ fontSize: "20px" }}>Sodybos skaičiuoklė</h1>
       {services.map((service, index) => (
-        <div key={index} style={{ marginBottom: "10px", borderBottom: "1px solid #ddd", paddingBottom: "10px" }}>
+        <div key={index} style={{ marginBottom: "10px", borderBottom: "1px solid #ddd", paddingBottom: "8px" }}>
           <label>
             <input
               type="checkbox"
@@ -72,16 +94,19 @@ export default function App() {
                 value={service.quantity}
                 min="1"
                 onChange={e => handleChange(index, "quantity", e.target.value)}
-                style={{ marginLeft: "10px", width: "60px" }}
+                style={{ marginLeft: "10px", width: "60px", fontSize: "13px" }}
               />
               <span style={{ marginLeft: "15px" }}>
-                Suma: <strong>{(service.price * service.quantity).toFixed(2)} €</strong>
+                Suma: <strong>€{(service.price * service.quantity).toFixed(2)}</strong>
               </span>
             </div>
           )}
         </div>
       ))}
-      <h2>Iš viso: {total.toFixed(2)} €</h2>
+      <h2 style={{ fontSize: "18px" }}>Iš viso: €{total.toFixed(2)}</h2>
+      <button onClick={downloadPDF} style={{ fontSize: "14px", padding: "8px 16px" }}>
+        Atsisiųsti PDF
+      </button>
     </div>
   );
 }
