@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import jsPDF from 'jspdf';
 import emailjs from 'emailjs-com';
-import sodybaImage from './Sodyba.jpg'; // teisingas importas
+import sodybaImage from './Sodyba.jpg'; // import fonui
 
 const servicesList = [
   { name: 'Sodyba sventei - Mini', price: 350 },
@@ -41,7 +41,8 @@ export default function App() {
     const newServices = [...services];
     if (field === 'selected') {
       newServices[index][field] = value;
-      newServices[index].quantity = value ? 1 : 0;
+      if (value) newServices[index].quantity = 1;
+      else newServices[index].quantity = 0;
     } else {
       newServices[index][field] = Number(value);
     }
@@ -67,16 +68,11 @@ export default function App() {
 
   const downloadPDF = () => {
     const doc = new jsPDF();
-
     const image = new Image();
     image.src = sodybaImage;
 
     image.onload = () => {
-      doc.addImage(image, 'JPEG', 0, 0, 210, 297); // visa A4
-
-      // blankinantis baltas sluoksnis
-      doc.setFillColor(255, 255, 255);
-      doc.rect(0, 0, 210, 297, 'F');
+      doc.addImage(image, 'JPEG', 0, 0, 210, 297); // visa A4 kaip fonas
 
       doc.setFontSize(14);
       doc.text('Uzsakymo suvestine', 105, 20, { align: 'center' });
@@ -109,7 +105,6 @@ export default function App() {
       doc.line(20, y, 190, y);
       doc.setFont('helvetica', 'bold');
       doc.text(`Iš viso: €${total.toFixed(2)}`, 190, y + 10, { align: 'right' });
-
       doc.save(`sodybos-skaiciuokle_${new Date().toISOString().split('T')[0]}.pdf`);
     };
   };
@@ -119,12 +114,7 @@ export default function App() {
       <h1 style={{ fontSize: '22px' }}>Sodybos skaičiuoklė</h1>
 
       <label>Jūsų vardas:<br />
-        <input
-          type="text"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          style={{ width: '100%', marginBottom: '10px' }}
-        />
+        <input type="text" value={name} onChange={e => setName(e.target.value)} style={{ width: '100%', marginBottom: '10px' }} />
       </label>
 
       {services.map((service, index) => (
@@ -157,9 +147,7 @@ export default function App() {
 
       <h2 style={{ fontSize: '16px' }}>Iš viso: €{total.toFixed(2)}</h2>
 
-      <button onClick={downloadPDF} style={{ marginRight: '10px' }}>
-        📄 Atsisiųsti PDF
-      </button>
+      <button onClick={downloadPDF} style={{ marginRight: '10px' }}>📄 Atsisiųsti PDF</button>
     </div>
   );
 }
