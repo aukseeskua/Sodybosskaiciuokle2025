@@ -1,55 +1,70 @@
-import { useState } from "react";
+import { useState } from 'react';
 
 export default function App() {
   const [people, setPeople] = useState(1);
   const [cleaning, setCleaning] = useState(false);
   const [serving, setServing] = useState(false);
+  const [servingHours, setServingHours] = useState(2);
 
-  const pricePerPerson = 25; // sodybos nuoma žmogui
+  const basePricePerPerson = 25;
   const cleaningPrice = 40;
-  const servingPrice = 25; // per valandą
-  const servingHours = 2;
+  const servingPricePerHour = 25;
 
   const total =
-    people * pricePerPerson +
+    people * basePricePerPerson +
     (cleaning ? cleaningPrice : 0) +
-    (serving ? servingPrice * servingHours : 0);
+    (serving ? servingHours * servingPricePerHour : 0);
 
   return (
-    <div style={{ padding: 20, fontFamily: "sans-serif" }}>
+    <div style={{ padding: '20px', fontFamily: 'Arial' }}>
       <h1>Sodybos skaičiuoklė</h1>
 
       <label>
-        Žmonių skaičius:{" "}
+        Žmonių skaičius:
         <input
           type="number"
           value={people}
-          onChange={(e) => setPeople(Number(e.target.value))}
           min="1"
+          onChange={(e) => setPeople(parseInt(e.target.value))}
+          style={{ marginLeft: '10px' }}
         />
       </label>
-      <br />
 
-      <label>
-        <input
-          type="checkbox"
-          checked={cleaning}
-          onChange={() => setCleaning(!cleaning)}
-        />
-        Užsakoma valymo paslauga (+€40)
-      </label>
-      <br />
+      <div style={{ marginTop: '10px' }}>
+        <label>
+          <input
+            type="checkbox"
+            checked={cleaning}
+            onChange={() => setCleaning(!cleaning)}
+          />
+          Užsakoma valymo paslauga (+€40)
+        </label>
+      </div>
 
-      <label>
-        <input
-          type="checkbox"
-          checked={serving}
-          onChange={() => setServing(!serving)}
-        />
-        Užsakomas stalo serviravimas (+€25/val., 2 val.)
-      </label>
+      <div style={{ marginTop: '10px' }}>
+        <label>
+          <input
+            type="checkbox"
+            checked={serving}
+            onChange={() => setServing(!serving)}
+          />
+          Užsakomas stalo serviravimas (+€25/val.)
+        </label>
+        {serving && (
+          <div style={{ marginTop: '5px', marginLeft: '20px' }}>
+            Valandų skaičius:
+            <input
+              type="number"
+              value={servingHours}
+              min="1"
+              onChange={(e) => setServingHours(parseInt(e.target.value))}
+              style={{ marginLeft: '10px' }}
+            />
+          </div>
+        )}
+      </div>
 
-      <h2>Iš viso: €{total}</h2>
+      <h2 style={{ marginTop: '20px' }}>Iš viso: €{total}</h2>
     </div>
   );
 }
