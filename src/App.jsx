@@ -35,6 +35,7 @@ export default function App() {
     servicesList.map(service => ({ ...service, selected: false, quantity: 0 }))
   );
   const [name, setName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
 
   const handleChange = (index, field, value) => {
     const newServices = [...services];
@@ -61,18 +62,24 @@ export default function App() {
       }
     });
     doc.text(`\nIš viso: €${total.toFixed(2)}`, 10, y + 5);
-    doc.save('sodybos-skaiciuokle.pdf');
+    const fileName = `sodybos-skaiciuokle_${name}_${new Date().toLocaleDateString()}.pdf`;
+    doc.save(fileName);
   };
 
   const sendEmail = () => {
+    if (!name.trim()) {
+      alert('Įrašykite savo vardą.');
+      return;
+    }
+
     const selectedServices = services.filter(s => s.selected);
     const details = selectedServices.map(s => `${s.name} (x${s.quantity}) – €${(s.quantity * s.price).toFixed(2)}`).join('\n');
 
     const templateParams = {
       name,
-      email: 'sodybapriemiesto@gmail.com',
+      email: userEmail || 'nenurodyta',
       title: `Naujas užsakymas`,
-      message: `Užsakovas: ${name}\n\nPaslaugos:\n${details}\n\nBendra suma: €${total.toFixed(2)}`
+      message: `Užsakovas: ${name} (${userEmail || 'el. paštas nenurodytas'})\n\nPaslaugos:\n${details}\n\nBendra suma: €${total.toFixed(2)}`
     };
 
     emailjs.send('service_c85w6vd', 'template_6cb20kh', templateParams, 'S19YpEwjGDkGRc_Kh')
@@ -86,6 +93,10 @@ export default function App() {
 
       <label>Jūsų vardas:<br />
         <input type="text" value={name} onChange={e => setName(e.target.value)} style={{ width: '100%', marginBottom: '10px' }} />
+      </label>
+
+      <label>Jūsų el. paštas (neprivaloma):<br />
+        <input type="email" value={userEmail} onChange={e => setUserEmail(e.target.value)} style={{ width: '100%', marginBottom: '10px' }} />
       </label>
 
       {services.map((service, index) => (
