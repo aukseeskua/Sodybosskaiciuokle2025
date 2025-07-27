@@ -20,51 +20,50 @@ export default function App() {
       <h1>Sodybos skaičiuoklė</h1>
 
       <label>
-        Žmonių skaičius:
+        Žmonių skaičius:{' '}
         <input
           type="number"
           value={people}
           min="1"
-          onChange={(e) => setPeople(parseInt(e.target.value))}
-          style={{ marginLeft: '10px' }}
+          onChange={(e) => setPeople(parseInt(e.target.value) || 1)}
         />
       </label>
+      <br />
 
-      <div style={{ marginTop: '10px' }}>
+      <label>
+        <input
+          type="checkbox"
+          checked={cleaning}
+          onChange={(e) => setCleaning(e.target.checked)}
+        />
+        Užsakoma valymo paslauga (+€40)
+      </label>
+      <br />
+
+      <label>
+        <input
+          type="checkbox"
+          checked={serving}
+          onChange={(e) => setServing(e.target.checked)}
+        />
+        Užsakomas stalo serviravimas (+€25/val.)
+      </label>
+      <br />
+
+      {serving && (
         <label>
+          Valandų skaičius:{' '}
           <input
-            type="checkbox"
-            checked={cleaning}
-            onChange={() => setCleaning(!cleaning)}
+            type="number"
+            value={servingHours}
+            min="1"
+            onChange={(e) => setServingHours(parseInt(e.target.value) || 1)}
           />
-          Užsakoma valymo paslauga (+€40)
         </label>
-      </div>
+      )}
+      <br /><br />
 
-      <div style={{ marginTop: '10px' }}>
-        <label>
-          <input
-            type="checkbox"
-            checked={serving}
-            onChange={() => setServing(!serving)}
-          />
-          Užsakomas stalo serviravimas (+€25/val.)
-        </label>
-        {serving && (
-          <div style={{ marginTop: '5px', marginLeft: '20px' }}>
-            Valandų skaičius:
-            <input
-              type="number"
-              value={servingHours}
-              min="1"
-              onChange={(e) => setServingHours(parseInt(e.target.value))}
-              style={{ marginLeft: '10px' }}
-            />
-          </div>
-        )}
-      </div>
-
-      <h2 style={{ marginTop: '20px' }}>Iš viso: €{total}</h2>
+      <h2>Iš viso: €{total}</h2>
     </div>
   );
 }
