@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import jsPDF from 'jspdf';
 import emailjs from 'emailjs-com';
+import sodybaImage from './Sodyba.jpg'; // import fonui
 
 const servicesList = [
   { name: 'Sodyba sventei - Mini', price: 350 },
@@ -50,7 +51,7 @@ export default function App() {
 
   const getSodybaPrice = () => {
     const sodyba = services.find(
-      s => s.selected && s.name.startsWith('Sodyba šventei')
+      s => s.selected && s.name.startsWith('Sodyba sventei')
     );
     return sodyba ? sodyba.price : 0;
   };
@@ -67,38 +68,45 @@ export default function App() {
 
   const downloadPDF = () => {
     const doc = new jsPDF();
-    doc.setFontSize(14);
-    doc.text('Uzsakymo suvestine', 105, 20, { align: 'center' });
-    doc.setFontSize(11);
-    doc.text(`Užsakovas: ${name}`, 20, 35);
-    let y = 50;
+    const image = new Image();
+    image.src = sodybaImage;
 
-    const selected = services.filter(s => s.selected);
+    image.onload = () => {
+      doc.addImage(image, 'JPEG', 0, 0, 210, 297); // visa A4 kaip fonas
 
-    doc.setFont('helvetica', 'bold');
-    doc.text('Paslauga', 20, y);
-    doc.text('Kiekis', 105, y);
-    doc.text('Suma (€)', 150, y);
-    doc.setLineWidth(0.5);
-    doc.line(20, y + 2, 190, y + 2);
-    y += 10;
+      doc.setFontSize(14);
+      doc.text('Uzsakymo suvestine', 105, 20, { align: 'center' });
+      doc.setFontSize(11);
+      doc.text(`Užsakovas: ${name}`, 20, 35);
+      let y = 50;
 
-    doc.setFont('helvetica', 'normal');
-    selected.forEach(s => {
-      const sum =
-        s.name === 'Papildoma para (+50%)'
-          ? 0.5 * getSodybaPrice()
-          : s.price * s.quantity;
-      doc.text(s.name, 20, y);
-      doc.text(`${s.quantity}`, 105, y, { align: 'right' });
-      doc.text(`€${sum.toFixed(2)}`, 190, y, { align: 'right' });
-      y += 8;
-    });
+      const selected = services.filter(s => s.selected);
 
-    doc.line(20, y, 190, y);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Iš viso: €${total.toFixed(2)}`, 190, y + 10, { align: 'right' });
-    doc.save(`sodybos-skaiciuokle_${new Date().toISOString().split('T')[0]}.pdf`);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Paslauga', 20, y);
+      doc.text('Kiekis', 105, y);
+      doc.text('Suma (€)', 150, y);
+      doc.setLineWidth(0.5);
+      doc.line(20, y + 2, 190, y + 2);
+      y += 10;
+
+      doc.setFont('helvetica', 'normal');
+      selected.forEach(s => {
+        const sum =
+          s.name === 'Papildoma para (+50%)'
+            ? 0.5 * getSodybaPrice()
+            : s.price * s.quantity;
+        doc.text(s.name, 20, y);
+        doc.text(`${s.quantity}`, 105, y, { align: 'right' });
+        doc.text(`€${sum.toFixed(2)}`, 190, y, { align: 'right' });
+        y += 8;
+      });
+
+      doc.line(20, y, 190, y);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Iš viso: €${total.toFixed(2)}`, 190, y + 10, { align: 'right' });
+      doc.save(`sodybos-skaiciuokle_${new Date().toISOString().split('T')[0]}.pdf`);
+    };
   };
 
   return (
