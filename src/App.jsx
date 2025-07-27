@@ -1,0 +1,1 @@
+// Reikia įklijuoti čia naujausią komponento kodą iš Canvas redaktoriaus.
