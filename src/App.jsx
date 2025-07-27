@@ -3,31 +3,31 @@ import jsPDF from 'jspdf';
 import emailjs from 'emailjs-com';
 
 const servicesList = [
-  { name: 'Sodyba šventei - Mini', price: 350 },
-  { name: 'Sodyba šventei - Midi', price: 700 },
-  { name: 'Sodyba šventei - Maxi', price: 1000 },
-  { name: 'Sodybos nuoma poilsiui (žmogui)', price: 40 },
+  { name: 'Sodyba sventei - Mini', price: 350 },
+  { name: 'Sodyba sventei - Midi', price: 700 },
+  { name: 'Sodyba sventei - Maxi', price: 1000 },
+  { name: 'Sodybos nuoma poilsiui (zmogui)', price: 40 },
   { name: 'Papildoma para (+50%)', price: 0 },
-  { name: 'Apgyvendinimas (žmogui)', price: 5 },
-  { name: 'Maisto serviravimo paslauga (val., 1 žmogus)', price: 25 },
-  { name: 'Lėkštės, šakutės, peiliai, taurės (vnt)', price: 1.5 },
-  { name: 'Staltiesės (vnt)', price: 10 },
-  { name: 'Kėdžių užvalkalai (vnt)', price: 2 },
-  { name: 'Indų plovimas - Mini', price: 50 },
-  { name: 'Indų plovimas - Midi', price: 100 },
-  { name: 'Indų plovimas - Maxi', price: 150 },
+  { name: 'Apgyvendinimas (zmogui)', price: 5 },
+  { name: 'Maisto serviravimo paslauga (val., 1 zmogus)', price: 25 },
+  { name: 'Lekstes, sakutes, peiliai, taures (vnt)', price: 1.5 },
+  { name: 'Staltieses (vnt)', price: 10 },
+  { name: 'Kedziu uzvalkalai (vnt)', price: 2 },
+  { name: 'Indu plovimas - Mini', price: 50 },
+  { name: 'Indu plovimas - Midi', price: 100 },
+  { name: 'Indu plovimas - Maxi', price: 150 },
   { name: 'Maisto/meniu organizavimas (vnt)', price: 35 },
-  { name: 'Žavakidės, žvakės, girliandos', price: 50 },
-  { name: 'Teminis salės puošimas - Mini', price: 50 },
-  { name: 'Teminis salės puošimas - Midi', price: 100 },
-  { name: 'Teminis salės puošimas - Maxi', price: 200 },
-  { name: 'Gėlių dekoras (stalas, arka)', price: 20 },
+  { name: 'Zavakides, zvakes, girliandos', price: 50 },
+  { name: 'Teminis sales puosimas - Mini', price: 50 },
+  { name: 'Teminis sales puosimas - Midi', price: 100 },
+  { name: 'Teminis sales puosimas - Maxi', price: 200 },
+  { name: 'Geliu dekoras (stalas, arka)', price: 20 },
   { name: 'Kubilas', price: 70 },
-  { name: 'Džakuzi', price: 100 },
+  { name: 'Dzakuzi', price: 100 },
   { name: 'Pirtis', price: 50 },
-  { name: 'Valymas po šventės - Mini', price: 50 },
-  { name: 'Valymas po šventės - Midi', price: 75 },
-  { name: 'Valymas po šventės - Maxi', price: 100 },
+  { name: 'Valymas po sventes - Mini', price: 50 },
+  { name: 'Valymas po sventes - Midi', price: 75 },
+  { name: 'Valymas po sventes - Maxi', price: 100 },
 ];
 
 export default function App() {
@@ -68,7 +68,7 @@ export default function App() {
   const downloadPDF = () => {
     const doc = new jsPDF();
     doc.setFontSize(14);
-    doc.text('Užsakymo suvestin', 105, 20, { align: 'center' });
+    doc.text('Uzsakymo suvestine', 105, 20, { align: 'center' });
     doc.setFontSize(11);
     doc.text(`Užsakovas: ${name}`, 20, 35);
     let y = 50;
