@@ -21,7 +21,7 @@ const servicesList = [
   { name: 'Teminis sales puosimas - Mini', price: 50 },
   { name: 'Teminis sales puosimas - Midi', price: 100 },
   { name: 'Teminis sales puosimas - Maxi', price: 200 },
-  { name: 'Geliu dekoras (stalas, arka)', price: 20 },
+  { name: 'Geliu dekoras (Gyvos geles kaina nuo... )', price: 30 },
   { name: 'Kubilas', price: 70 },
   { name: 'Dzakuzi', price: 100 },
   { name: 'Pirtis', price: 50 },
