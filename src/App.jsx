@@ -7,7 +7,7 @@ const servicesList = [
   { name: 'Sodyba šventei - Midi', price: 700 },
   { name: 'Sodyba šventei - Maxi', price: 1000 },
   { name: 'Sodybos nuoma poilsiui (žmogui)', price: 40 },
-  { name: 'Papildoma para (+50%)', price: 0 }, // Dinamiškai skaiciuosim
+  { name: 'Papildoma para (+50%)', price: 0 },
   { name: 'Apgyvendinimas (žmogui)', price: 5 },
   { name: 'Maisto serviravimo paslauga (val., 1 žmogus)', price: 25 },
   { name: 'Lėkštės, šakutės, peiliai, taurės (vnt)', price: 1.5 },
@@ -17,7 +17,7 @@ const servicesList = [
   { name: 'Indų plovimas - Midi', price: 100 },
   { name: 'Indų plovimas - Maxi', price: 150 },
   { name: 'Maisto/meniu organizavimas (vnt)', price: 35 },
-  { name: 'Žvakidės, žvakės, girliandos', price: 50 },
+  { name: 'Žavakidės, žvakės, girliandos', price: 50 },
   { name: 'Teminis salės puošimas - Mini', price: 50 },
   { name: 'Teminis salės puošimas - Midi', price: 100 },
   { name: 'Teminis salės puošimas - Maxi', price: 200 },
@@ -40,78 +40,65 @@ export default function App() {
     const newServices = [...services];
     if (field === 'selected') {
       newServices[index][field] = value;
-      if (value) newServices[index].quantity = 1; // pasirinkus iskart 1
+      if (value) newServices[index].quantity = 1;
+      else newServices[index].quantity = 0;
     } else {
       newServices[index][field] = Number(value);
     }
     setServices(newServices);
   };
 
-  const calculateExtraDayPrice = () => {
-    const baseService = services.find(s => s.selected && s.name.includes('Sodyba šventei'));
-    const extraDayService = services.find(s => s.name.includes('Papildoma para'));
-    if (baseService && extraDayService?.selected) {
-      return 0.5 * baseService.price * extraDayService.quantity;
-    }
-    return 0;
+  const getSodybaPrice = () => {
+    const sodyba = services.find(
+      s => s.selected && s.name.startsWith('Sodyba šventei')
+    );
+    return sodyba ? sodyba.price : 0;
   };
 
   const total = services.reduce((sum, service) => {
-    if (service.selected && !service.name.includes('Papildoma para')) {
+    if (service.selected) {
+      if (service.name === 'Papildoma para (+50%)') {
+        return sum + 0.5 * getSodybaPrice();
+      }
       return sum + service.price * service.quantity;
     }
     return sum;
-  }, 0) + calculateExtraDayPrice();
+  }, 0);
 
   const downloadPDF = () => {
     const doc = new jsPDF();
     doc.setFontSize(14);
-    doc.text('Užsakymo suvestin', 105, 20, null, null, 'center');
-    doc.setFontSize(10);
-    doc.text(`Užsakovas: ${name}`, 20, 30);
+    doc.text('Užsakymo suvestin', 105, 20, { align: 'center' });
+    doc.setFontSize(11);
+    doc.text(`Užsakovas: ${name}`, 20, 35);
+    let y = 50;
 
-    doc.autoTable({
-      startY: 40,
-      head: [['Paslauga', 'Kiekis', 'Suma (€)']],
-      body: services
-        .filter(s => s.selected && s.name !== 'Papildoma para (+50%)')
-        .map(s => [s.name, s.quantity, `€${(s.quantity * s.price).toFixed(2)}`])
-        .concat(
-          calculateExtraDayPrice() > 0
-            ? [['Papildoma para (+50%)', services.find(s => s.name.includes('Papildoma para')).quantity, `€${calculateExtraDayPrice().toFixed(2)}`]]
-            : []
-        ),
-      styles: { fontSize: 10 },
-      theme: 'grid',
+    const selected = services.filter(s => s.selected);
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('Paslauga', 20, y);
+    doc.text('Kiekis', 105, y);
+    doc.text('Suma (€)', 150, y);
+    doc.setLineWidth(0.5);
+    doc.line(20, y + 2, 190, y + 2);
+    y += 10;
+
+    doc.setFont('helvetica', 'normal');
+    selected.forEach(s => {
+      const sum =
+        s.name === 'Papildoma para (+50%)'
+          ? 0.5 * getSodybaPrice()
+          : s.price * s.quantity;
+      doc.text(s.name, 20, y);
+      doc.text(`${s.quantity}`, 105, y, { align: 'right' });
+      doc.text(`€${sum.toFixed(2)}`, 190, y, { align: 'right' });
+      y += 8;
     });
 
-    doc.setFontSize(12);
-    doc.setFont(undefined, 'bold');
-    doc.text(`Iš viso: €${total.toFixed(2)}`, 180, doc.lastAutoTable.finalY + 10, null, null, 'right');
+    doc.line(20, y, 190, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Iš viso: €${total.toFixed(2)}`, 190, y + 10, { align: 'right' });
     doc.save(`sodybos-skaiciuokle_${new Date().toISOString().split('T')[0]}.pdf`);
-  };
-
-  const sendEmail = () => {
-    const selectedServices = services.filter(s => s.selected);
-    const details = selectedServices
-      .map(s => `${s.name} (x${s.quantity}) – €${(s.quantity * s.price).toFixed(2)}`)
-      .join('\n');
-
-    const extraPrice = calculateExtraDayPrice();
-
-    const templateParams = {
-      name,
-      email: 'sodybapriemiesto@gmail.com',
-      title: `Naujas užsakymas`,
-      message: `Užsakovas: ${name}\n\nPaslaugos:\n${details}\n${
-        extraPrice ? `\nPapildoma para: €${extraPrice.toFixed(2)}\n` : ''
-      }\nBendra suma: €${total.toFixed(2)}`,
-    };
-
-    emailjs
-      .send('service_c85w6vd', 'template_6cb20kh', templateParams, 'S19YpEwjGDkGRc_Kh')
-      .then(() => alert('Išsiźusta sėkmingai!'))
-      .catch(err => alert('Klaida siunčiant: ' + err.text));
   };
 
   return (
@@ -133,12 +120,12 @@ export default function App() {
             {service.name} – {service.price} € / vnt
           </label>
 
-          {service.selected && (
+          {service.selected && service.name !== 'Papildoma para (+50%)' && (
             <div style={{ marginTop: '5px' }}>
               <div>Kiekis:
                 <input
                   type="number"
-                  min="1"
+                  min="0"
                   value={service.quantity}
                   onChange={e => handleChange(index, 'quantity', e.target.value)}
                   style={{ width: '60px', marginLeft: '8px' }}
@@ -153,7 +140,6 @@ export default function App() {
       <h2 style={{ fontSize: '16px' }}>Iš viso: €{total.toFixed(2)}</h2>
 
       <button onClick={downloadPDF} style={{ marginRight: '10px' }}>📄 Atsisiųsti PDF</button>
-      <button onClick={sendEmail}>✉️ Siųsti el. paštu</button>
     </div>
   );
 }
