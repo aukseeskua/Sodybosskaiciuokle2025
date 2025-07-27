@@ -17,7 +17,7 @@ const servicesList = [
   { name: 'Indų plovimas - Midi', price: 100 },
   { name: 'Indų plovimas - Maxi', price: 150 },
   { name: 'Maisto/meniu organizavimas (vnt)', price: 35 },
-  { name: 'Žvakidės, žvakės, girliandos', price: 50 },
+  { name: 'Žavakidės, žvakės, girliandos', price: 50 },
   { name: 'Teminis salės puošimas - Mini', price: 50 },
   { name: 'Teminis salės puošimas - Midi', price: 100 },
   { name: 'Teminis salės puošimas - Maxi', price: 200 },
@@ -35,7 +35,6 @@ export default function App() {
     servicesList.map(service => ({ ...service, selected: false, quantity: 0 }))
   );
   const [name, setName] = useState('');
-  const [userEmail, setUserEmail] = useState('');
 
   const handleChange = (index, field, value) => {
     const newServices = [...services];
@@ -43,78 +42,64 @@ export default function App() {
     setServices(newServices);
   };
 
-  const calculateTotal = () => {
-    let baseTotal = 0;
-    let additionalNight = 0;
-    let additionalNightSelected = false;
+  const baseService = services.find(s => s.name.includes('Sodyba šventei') && s.selected);
+  const extra = services.find(s => s.name === 'Papildoma para (+50%)' && s.selected);
+  const extraCost = baseService && extra ? baseService.price * 0.5 : 0;
 
-    services.forEach(service => {
-      if (service.selected && service.name.includes('Sodyba šventei')) {
-        baseTotal += service.price * service.quantity;
-      }
-    });
-
-    services.forEach(service => {
-      if (service.name === 'Papildoma para (+50%)') {
-        additionalNightSelected = service.selected;
-      }
-    });
-
-    const total = services.reduce((sum, service) => {
-      if (!service.selected) return sum;
-      if (service.name === 'Papildoma para (+50%)') return sum; // skip for now
-      return sum + service.price * service.quantity;
-    }, 0);
-
-    if (additionalNightSelected) {
-      additionalNight = baseTotal * 0.5;
-    }
-
-    return total + additionalNight;
-  };
-
-  const total = calculateTotal();
+  const total = services.reduce((sum, s) => s.selected && s.name !== 'Papildoma para (+50%)' ? sum + s.price * s.quantity : sum, 0) + extraCost;
 
   const downloadPDF = () => {
     const doc = new jsPDF();
+    doc.setFontSize(12);
+    doc.text(`Užsakymo suvestinė`, 105, 15, { align: 'center' });
     doc.setFontSize(10);
-    doc.text(`Užsakymo skaičiuoklė - ${name}`, 10, 10);
-    let y = 20;
+    doc.text(`Užsakovas: ${name}`, 10, 25);
+
+    let y = 35;
+    doc.setFont(undefined, 'bold');
+    doc.text('Paslauga', 10, y);
+    doc.text('Kiekis', 100, y);
+    doc.text('Suma (€)', 150, y);
+    doc.setFont(undefined, 'normal');
+    y += 7;
+
     services.forEach(service => {
       if (service.selected && service.name !== 'Papildoma para (+50%)') {
-        doc.text(`${service.name} – Kiekis: ${service.quantity}, Suma: €${(service.price * service.quantity).toFixed(2)}`, 10, y);
+        doc.text(service.name, 10, y);
+        doc.text(String(service.quantity), 100, y);
+        doc.text(`€${(service.price * service.quantity).toFixed(2)}`, 150, y);
         y += 6;
       }
     });
-    if (services.find(s => s.name === 'Papildoma para (+50%)' && s.selected)) {
-      doc.text(`Papildoma para – €${(calculateTotal() - total).toFixed(2)}`, 10, y);
+
+    if (extra && baseService) {
+      doc.text('Papildoma para (50%)', 10, y);
+      doc.text('1', 100, y);
+      doc.text(`€${extraCost.toFixed(2)}`, 150, y);
       y += 6;
     }
-    doc.text(`\nIš viso: €${calculateTotal().toFixed(2)}`, 10, y + 5);
-    const fileName = `sodybos-skaiciuokle_${name}_${new Date().toLocaleDateString()}.pdf`;
-    doc.save(fileName);
+
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.2);
+    doc.line(10, y + 2, 200, y + 2);
+    y += 8;
+
+    doc.setFont(undefined, 'bold');
+    doc.text(`Iš viso: €${total.toFixed(2)}`, 150, y);
+    doc.save(`sodybos-skaiciuokle_${new Date().toLocaleDateString('lt-LT').replace(/\//g, '_')}.pdf`);
   };
 
   const sendEmail = () => {
-    if (!name.trim()) {
-      alert('Įrašykite savo vardą.');
-      return;
-    }
-
-    const selectedServices = services.filter(s => s.selected && s.name !== 'Papildoma para (+50%)');
-    const details = selectedServices.map(s => `${s.name} (x${s.quantity}) – €${(s.quantity * s.price).toFixed(2)}`).join('\n');
-
-    let extra = '';
-    if (services.find(s => s.name === 'Papildoma para (+50%)' && s.selected)) {
-      const base = services.filter(s => s.selected && s.name.includes('Sodyba šventei')).reduce((sum, s) => sum + s.price * s.quantity, 0);
-      extra = `\nPapildoma para: €${(base * 0.5).toFixed(2)}`;
-    }
+    const selectedServices = services.filter(s => s.selected);
+    const details = selectedServices
+      .map(s => `${s.name} (x${s.quantity}) – €${(s.quantity * s.price).toFixed(2)}`)
+      .join('\n');
 
     const templateParams = {
       name,
-      email: userEmail || 'nenurodyta',
+      email: 'sodybapriemiesto@gmail.com',
       title: `Naujas užsakymas`,
-      message: `Užsakovas: ${name} (${userEmail || 'el. paštas nenurodytas'})\n\nPaslaugos:\n${details}${extra}\n\nBendra suma: €${calculateTotal().toFixed(2)}`
+      message: `Užsakovas: ${name}\n\nPaslaugos:\n${details}\n\nBendra suma: €${total.toFixed(2)}`
     };
 
     emailjs.send('service_c85w6vd', 'template_6cb20kh', templateParams, 'S19YpEwjGDkGRc_Kh')
@@ -130,10 +115,6 @@ export default function App() {
         <input type="text" value={name} onChange={e => setName(e.target.value)} style={{ width: '100%', marginBottom: '10px' }} />
       </label>
 
-      <label>Jūsų el. paštas (neprivaloma):<br />
-        <input type="email" value={userEmail} onChange={e => setUserEmail(e.target.value)} style={{ width: '100%', marginBottom: '10px' }} />
-      </label>
-
       {services.map((service, index) => (
         <div key={index} style={{ border: '1px solid #ccc', marginBottom: '8px', padding: '8px' }}>
           <label>
@@ -142,10 +123,10 @@ export default function App() {
               checked={service.selected}
               onChange={e => handleChange(index, 'selected', e.target.checked)}
             />{' '}
-            {service.name} – {service.price > 0 ? `${service.price} € / vnt` : 'skaičiuojama automatiškai'}
+            {service.name} – {service.price} € / vnt
           </label>
 
-          {service.selected && service.name !== 'Papildoma para (+50%)' && (
+          {service.selected && (
             <div style={{ marginTop: '5px' }}>
               <div>Kiekis:
                 <input
@@ -162,10 +143,10 @@ export default function App() {
         </div>
       ))}
 
-      <h2 style={{ fontSize: '16px' }}>Iš viso: €{calculateTotal().toFixed(2)}</h2>
+      <h2 style={{ fontSize: '16px' }}>Iš viso: €{total.toFixed(2)}</h2>
 
       <button onClick={downloadPDF} style={{ marginRight: '10px' }}>📄 Atsisiųsti PDF</button>
-      <button onClick={sendEmail}>✉️ Siųsti el. paštu</button>
+      <button onClick={sendEmail}>✉️ Sišsti el. paštu</button>
     </div>
   );
 }
