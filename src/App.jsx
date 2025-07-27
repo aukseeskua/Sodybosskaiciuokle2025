@@ -51,7 +51,7 @@ export default function App() {
   const downloadPDF = () => {
     const doc = new jsPDF();
     doc.setFontSize(12);
-    doc.text(`Užsakymo suvestinė`, 105, 15, { align: 'center' });
+    doc.text(`Užsakymo suvestine`, 105, 15, { align: 'center' });
     doc.setFontSize(10);
     doc.text(`Užsakovas: ${name}`, 10, 25);
 
