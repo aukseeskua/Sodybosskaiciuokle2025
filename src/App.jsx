@@ -17,7 +17,7 @@ const servicesList = [
   { name: 'Indų plovimas - Midi', price: 100 },
   { name: 'Indų plovimas - Maxi', price: 150 },
   { name: 'Maisto/meniu organizavimas (vnt)', price: 35 },
-  { name: 'Žvakidės, žvakės, girliandos', price: 50 },
+  { name: 'Žavakidės, žvakės, girliandos', price: 50 },
   { name: 'Teminis salės puošimas - Mini', price: 50 },
   { name: 'Teminis salės puošimas - Midi', price: 100 },
   { name: 'Teminis salės puošimas - Maxi', price: 200 },
@@ -53,7 +53,7 @@ export default function App() {
     let baseTotal = 0;
     let sodybaSum = 0;
 
-    services.forEach((s, i) => {
+    services.forEach((s) => {
       if (s.selected) {
         const subtotal = s.price * s.quantity;
         baseTotal += subtotal;
@@ -61,10 +61,9 @@ export default function App() {
       }
     });
 
-    const extraIndex = services.findIndex(s => s.name.includes('Papildoma para'));
-    if (extraIndex !== -1 && services[extraIndex].selected) {
-      const extraCost = 0.5 * sodybaSum;
-      baseTotal += extraCost;
+    const extra = services.find(s => s.name === 'Papildoma para (+50%)');
+    if (extra && extra.selected) {
+      baseTotal += 0.5 * sodybaSum;
     }
 
     return baseTotal;
@@ -74,17 +73,19 @@ export default function App() {
 
   const downloadPDF = () => {
     const doc = new jsPDF();
-    doc.setFontSize(12);
-    doc.text(`Užsakymo skaičiuokle`, 10, 10);
-    doc.setFontSize(10);
-    doc.text(`Vardas: ${name}`, 10, 18);
+    doc.setFontSize(14);
+    doc.text("UžSAKYMO SKAIČIUOKLĖ", 105, 20, null, null, "center");
 
-    let y = 28;
+    doc.setFontSize(12);
+    doc.text(`Vardas: ${name}`, 20, 30);
+
+    let y = 40;
+
     services.forEach(service => {
-      if (service.selected && service.quantity > 0) {
-        const line = `${service.name} – Kiekis: ${service.quantity}, Suma: €${(service.price * service.quantity).toFixed(2)}`;
-        doc.text(line, 10, y);
-        y += 7;
+      if (service.selected && service.quantity > 0 && !service.name.includes('Papildoma para')) {
+        const line = `${service.name} – Kiekis: ${service.quantity} – Suma: €${(service.price * service.quantity).toFixed(2)}`;
+        doc.text(line, 20, y);
+        y += 8;
       }
     });
 
@@ -95,12 +96,13 @@ export default function App() {
     const papildoma = services.find(s => s.name.includes('Papildoma para'));
     if (papildoma && papildoma.selected) {
       const extra = sodybaTotal * 0.5;
-      doc.text(`Papildoma para: €${extra.toFixed(2)}`, 10, y);
-      y += 7;
+      doc.text(`Papildoma para: €${extra.toFixed(2)}`, 20, y);
+      y += 10;
     }
 
-    doc.setFontSize(12);
-    doc.text(`Iš viso: €${total.toFixed(2)}`, 10, y + 5);
+    doc.setFontSize(13);
+    doc.text(`Iš viso: €${total.toFixed(2)}`, 20, y + 10);
+
     doc.save(`sodybos-skaiciuokle_${new Date().toLocaleDateString()}.pdf`);
   };
 
