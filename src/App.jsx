@@ -6,18 +6,18 @@ const servicesList = [
   { name: 'Sodyba šventei - Mini', price: 350 },
   { name: 'Sodyba šventei - Midi', price: 700 },
   { name: 'Sodyba šventei - Maxi', price: 1000 },
-  { name: 'Sodybos nuoma poilsiui (žmogui)', price: 40 },
   { name: 'Papildoma para (+50%)', price: 0 },
+  { name: 'Sodybos nuoma poilsiui (žmogui)', price: 40 },
   { name: 'Apgyvendinimas (žmogui)', price: 5 },
   { name: 'Maisto serviravimo paslauga (val., 1 žmogus)', price: 25 },
-  { name: 'Lėkštės, šakutės, peiliai, taurės (vnt)', price: 1.50 },
+  { name: 'Lėkštės, šakutės, peiliai, taurės (vnt)', price: 1.5 },
   { name: 'Staltiesės (vnt)', price: 10 },
   { name: 'Kėdžių užvalkalai (vnt)', price: 2 },
   { name: 'Indų plovimas - Mini', price: 50 },
   { name: 'Indų plovimas - Midi', price: 100 },
   { name: 'Indų plovimas - Maxi', price: 150 },
   { name: 'Maisto/meniu organizavimas (vnt)', price: 35 },
-  { name: 'Žavakidės, žvakės, girliandos', price: 50 },
+  { name: 'Žvakidės, žvakės, girliandos', price: 50 },
   { name: 'Teminis salės puošimas - Mini', price: 50 },
   { name: 'Teminis salės puošimas - Midi', price: 100 },
   { name: 'Teminis salės puošimas - Maxi', price: 200 },
@@ -38,71 +38,91 @@ export default function App() {
 
   const handleChange = (index, field, value) => {
     const newServices = [...services];
-    newServices[index][field] = field === 'selected' ? value : Number(value);
+    if (field === 'selected') {
+      newServices[index].selected = value;
+      if (value && newServices[index].quantity === 0) {
+        newServices[index].quantity = 1;
+      }
+    } else {
+      newServices[index][field] = Number(value);
+    }
     setServices(newServices);
   };
 
-  const baseService = services.find(s => s.name.includes('Sodyba šventei') && s.selected);
-  const extra = services.find(s => s.name === 'Papildoma para (+50%)' && s.selected);
-  const extraCost = baseService && extra ? baseService.price * 0.5 : 0;
+  const calculateTotal = () => {
+    let baseTotal = 0;
+    let sodybaSum = 0;
 
-  const total = services.reduce((sum, s) => s.selected && s.name !== 'Papildoma para (+50%)' ? sum + s.price * s.quantity : sum, 0) + extraCost;
+    services.forEach((s, i) => {
+      if (s.selected) {
+        const subtotal = s.price * s.quantity;
+        baseTotal += subtotal;
+        if (s.name.includes('Sodyba šventei')) sodybaSum += subtotal;
+      }
+    });
+
+    const extraIndex = services.findIndex(s => s.name.includes('Papildoma para'));
+    if (extraIndex !== -1 && services[extraIndex].selected) {
+      const extraCost = 0.5 * sodybaSum;
+      baseTotal += extraCost;
+    }
+
+    return baseTotal;
+  };
+
+  const total = calculateTotal();
 
   const downloadPDF = () => {
     const doc = new jsPDF();
     doc.setFontSize(12);
-    doc.text(`Užsakymo suvestine`, 105, 15, { align: 'center' });
+    doc.text(`Užsakymo skaičiuokle`, 10, 10);
     doc.setFontSize(10);
-    doc.text(`Užsakovas: ${name}`, 10, 25);
+    doc.text(`Vardas: ${name}`, 10, 18);
 
-    let y = 35;
-    doc.setFont(undefined, 'bold');
-    doc.text('Paslauga', 10, y);
-    doc.text('Kiekis', 100, y);
-    doc.text('Suma (€)', 150, y);
-    doc.setFont(undefined, 'normal');
-    y += 7;
-
+    let y = 28;
     services.forEach(service => {
-      if (service.selected && service.name !== 'Papildoma para (+50%)') {
-        doc.text(service.name, 10, y);
-        doc.text(String(service.quantity), 100, y);
-        doc.text(`€${(service.price * service.quantity).toFixed(2)}`, 150, y);
-        y += 6;
+      if (service.selected && service.quantity > 0) {
+        const line = `${service.name} – Kiekis: ${service.quantity}, Suma: €${(service.price * service.quantity).toFixed(2)}`;
+        doc.text(line, 10, y);
+        y += 7;
       }
     });
 
-    if (extra && baseService) {
-      doc.text('Papildoma para (50%)', 10, y);
-      doc.text('1', 100, y);
-      doc.text(`€${extraCost.toFixed(2)}`, 150, y);
-      y += 6;
+    const sodybaTotal = services
+      .filter(s => s.selected && s.name.includes('Sodyba šventei'))
+      .reduce((sum, s) => sum + s.price * s.quantity, 0);
+
+    const papildoma = services.find(s => s.name.includes('Papildoma para'));
+    if (papildoma && papildoma.selected) {
+      const extra = sodybaTotal * 0.5;
+      doc.text(`Papildoma para: €${extra.toFixed(2)}`, 10, y);
+      y += 7;
     }
 
-    doc.setDrawColor(0);
-    doc.setLineWidth(0.2);
-    doc.line(10, y + 2, 200, y + 2);
-    y += 8;
-
-    doc.setFont(undefined, 'bold');
-    doc.text(`Iš viso: €${total.toFixed(2)}`, 150, y);
-    doc.save(`sodybos-skaiciuokle_${new Date().toLocaleDateString('lt-LT').replace(/\//g, '_')}.pdf`);
+    doc.setFontSize(12);
+    doc.text(`Iš viso: €${total.toFixed(2)}`, 10, y + 5);
+    doc.save(`sodybos-skaiciuokle_${new Date().toLocaleDateString()}.pdf`);
   };
 
   const sendEmail = () => {
-    const selectedServices = services.filter(s => s.selected);
-    const details = selectedServices
-      .map(s => `${s.name} (x${s.quantity}) – €${(s.quantity * s.price).toFixed(2)}`)
-      .join('\n');
+    const selected = services.filter(s => s.selected && s.quantity > 0);
+    const list = selected.map(s => `${s.name} (x${s.quantity}) – €${(s.price * s.quantity).toFixed(2)}`).join('\n');
 
-    const templateParams = {
+    const sodybaTotal = services
+      .filter(s => s.selected && s.name.includes('Sodyba šventei'))
+      .reduce((sum, s) => sum + s.price * s.quantity, 0);
+
+    const papildoma = services.find(s => s.name.includes('Papildoma para'));
+    const extra = papildoma && papildoma.selected ? `Papildoma para: €${(sodybaTotal * 0.5).toFixed(2)}\n` : '';
+
+    const params = {
       name,
       email: 'sodybapriemiesto@gmail.com',
       title: `Naujas užsakymas`,
-      message: `Užsakovas: ${name}\n\nPaslaugos:\n${details}\n\nBendra suma: €${total.toFixed(2)}`
+      message: `Užsakovas: ${name}\n\nPaslaugos:\n${list}\n${extra}\nBendra suma: €${total.toFixed(2)}`
     };
 
-    emailjs.send('service_c85w6vd', 'template_6cb20kh', templateParams, 'S19YpEwjGDkGRc_Kh')
+    emailjs.send('service_c85w6vd', 'template_6cb20kh', params, 'S19YpEwjGDkGRc_Kh')
       .then(() => alert('Išsiųsta sėkmingai!'))
       .catch(err => alert('Klaida siunčiant: ' + err.text));
   };
@@ -112,7 +132,12 @@ export default function App() {
       <h1 style={{ fontSize: '22px' }}>Sodybos skaičiuoklė</h1>
 
       <label>Jūsų vardas:<br />
-        <input type="text" value={name} onChange={e => setName(e.target.value)} style={{ width: '100%', marginBottom: '10px' }} />
+        <input
+          type="text"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          style={{ width: '100%', marginBottom: '10px' }}
+        />
       </label>
 
       {services.map((service, index) => (
@@ -146,7 +171,7 @@ export default function App() {
       <h2 style={{ fontSize: '16px' }}>Iš viso: €{total.toFixed(2)}</h2>
 
       <button onClick={downloadPDF} style={{ marginRight: '10px' }}>📄 Atsisiųsti PDF</button>
-      <button onClick={sendEmail}>✉️ Sišsti el. paštu</button>
+      <button onClick={sendEmail}>✉️ Siųsti el. paštu</button>
     </div>
   );
 }
